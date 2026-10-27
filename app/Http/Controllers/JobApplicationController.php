@@ -1,0 +1,49 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Job;
+use Illuminate\Http\Request;
+
+use Illuminate\Support\Facades\Gate;
+
+class JobApplicationController extends Controller {
+
+    public function create(Job $job) {
+
+        Gate::authorize('apply',$job);
+
+        return view('job_application.create', ['job' => $job]);
+
+    }
+
+
+
+    public function store(Request $request,Job $job, ){
+
+        $data = $request->validate([
+            'expected_salary' => 'required|numeric|min:1|max:1000000',
+            'cv' => "required|file|mimes:pdf|max:2048"
+        ]);
+
+        $file = $request->file('cv');
+        $path = $file->store('cvs','private');
+
+        $job->jobApplications()->create([
+            'user_id' => $request->user()->id,
+            'expected_salary' => $data['expected_salary'],
+            'cv_path' => $path,
+
+    ]);
+
+        return redirect()->route('jobs.show', $job)
+            ->with('msg', 'Job application submitted.');
+    }
+
+    
+    public function destroy(string $id) {
+
+    }
+
+}
+
